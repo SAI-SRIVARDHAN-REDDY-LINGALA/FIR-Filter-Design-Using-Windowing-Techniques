@@ -1,0 +1,116 @@
+N=513;
+n = (0:1:N-1);
+k = (N-1)/2;
+
+wc = pi/4;
+hd = zeros(1,N);
+
+for i = 0:k-1
+    hd(i+1) = sin(wc*(i-k))/(pi*(i-k));
+end
+
+hd(k+1) = wc/pi;
+
+for i = k+1:N-1
+    hd(i+1) = sin(wc*(i-k))/(pi*(i-k));
+end
+
+figure(1)
+subplot(121)
+plot(n,hd)
+title('Input Function');
+xlabel('n');
+ylabel('Sinc(n)');
+
+j = 1:1:N;
+w = 0.54-0.46*cos(2*pi*j/(N-1));
+
+subplot(122)
+plot(n,w)
+title('Hamming Window Function');
+xlabel('n');
+ylabel('w(n)');
+
+h = hd.*w;
+
+figure(2)
+plot(n,h);
+
+W = -pi:0.01:pi;
+
+figure(3);
+freqz(h,1,W);
+title("Hamming Bode Plot for N = " + N);
+
+% Following is the second part involving filtering of the given signal
+
+k = 15000;
+n1 = 0:k; %samples for the function to be inputted
+
+x = sin (pi/8*n1) + 2*sin(pi/2*n1); %input function x with two frequencies
+y = filtfilt(h, 1, x); %filtered function
+
+
+X = fftshift(fft(x,N)); %computing the fourier transform of the input x
+Y = fftshift(fft(y,N)); %computing the fourier transform of the filtered output y
+
+figure(4)
+subplot(421)
+plot(n1(1:50),x(1:50))
+title('Time domain plot of x')
+xlabel('t');
+ylabel('x(t)');
+
+subplot(422)
+plot(2/(N-1)*(-(N-1)/2:(N-1)/2),abs(X));
+title('Fourier Spectra of x')
+xlabel('f(normalized by pi)');
+ylabel('X(f)');
+
+subplot(423)
+plot(n1(1:50),y(1:50))
+title('Time domain plot of y')
+xlabel('t');
+ylabel('y(t)');
+
+subplot(424)
+plot(2/(N-1)*(-(N-1)/2:(N-1)/2),abs(Y));
+title('Fourier Spectra of y')
+xlabel('f(normalized by pi)');
+ylabel('X(f)');
+
+noise = randn(1,k+1);
+xn = x + noise;
+yn = filtfilt(h, 1, xn);
+
+Xn = fftshift(fft(xn,N));
+Yn = fftshift(fft(yn,N));
+
+subplot(425)
+plot(n1(1:50),xn(1:50))
+title('Time domain plot of noisy signal xn')
+xlabel('t');
+ylabel('xn(t)');
+
+subplot(426)
+plot(2/(N-1)*(-(N-1)/2:(N-1)/2),abs(Xn));
+title('Fourier Spectra of xn')
+xlabel('f(normalized by pi)');
+ylabel('Xn(f)');
+
+subplot(427)
+plot(n1(1:50),yn(1:50))
+title('Time domain plot of filtered output yn')
+xlabel('t');
+ylabel('yn(t)');
+
+subplot(428)
+plot(2/(N-1)*(-(N-1)/2:(N-1)/2),abs(Yn));
+title('Fourier Spectra of yn')
+xlabel('f(normalized by pi)');
+ylabel('Yn(f)');
+
+sgtitle("Hamming window N = " + N);
+
+input_snr=10*log(sumsqr(x)/sumsqr(noise));
+output_snr=10*log(sumsqr(y)/abs(sumsqr(yn-y)));
